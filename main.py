@@ -4,6 +4,8 @@ from time import sleep
 # We use threading, cuz multiprocessing is bad at passing arguments to targets
 # also, we don`t need GIL unlocking.
 
+VERSION = "v0.1"
+
 class Client:
     def __init__(self):
         
@@ -42,6 +44,7 @@ class Client:
             sys.exit()
 
     def start(self):
+        print(f"[BRIDGE] [GEN] [INF] Bridge version - {VERSION}")
         print(f"[BRIDGE] [GEN] [INF] Connecting Socket to IP0 - {self.ip}:{self.port}")
         self.socket_ip1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Create and bind first socket to First IP
         self.socket_ip1.connect((self.ip, self.port))
@@ -89,15 +92,15 @@ class Client:
             if not message: # If no message, break all process
                 break
             
-            print(f"[BRIDGE] [IP{num}] [INF] Got message from IP{num}!")
+            print(f"[BRIDGE] [IP{int(num)-1}] [INF] Got message from IP{int(num)-1}!")
 
             if info[num] != message and not message in info["blacklist"]: # If message is was not sended in this server at last
-                print(f"[BRIDGE] [IP{num}] [INF] Sending message to IP{target_num}.")
+                print(f"[BRIDGE] [IP{int(num)-1}] [INF] Sending message to IP{int(target_num)-1}.")
                 socket2.send(message) # Send encoded message
                 info.update({"1": message}) # Set up last messages at 1 and at second server
                 info.update({"2": message})
             else:
-                print(f"[BRIDGE] [IP{num}] [INF] Not sending message, because message is already sended or in blacklist.")
+                print(f"[BRIDGE] [IP{int(num)-1}] [INF] Not sending message, because message is already sended or in blacklist.")
 
 if __name__ == "__main__":
     cli = Client() # Create object if not imported
