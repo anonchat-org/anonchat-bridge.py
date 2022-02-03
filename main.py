@@ -1,16 +1,22 @@
 import argparse, sys, socket # Import all
 from threading import Thread
-from time import sleep
+import json
 # We use threading, cuz multiprocessing is bad at passing arguments to targets
 # also, we don`t need GIL unlocking.
 
-VERSION = "v0.1"
+VERSION = "v0.2"
 
 class Client:
     def __init__(self):
         
         self.parser()
         self.start()
+
+
+    def build_msg(self, msg): # Build msg
+        message = {"user": "[BRIDGE]", "msg": msg}                    
+        return json.dumps(message, ensure_ascii=False).encode()
+
 
     def parser(self): 
         parser = argparse.ArgumentParser(
@@ -28,6 +34,10 @@ class Client:
 
         ip2 = args.ip2.split(":") # Second IP
         ip2.append(6969)
+
+        if ip == ip2:
+            print(f"Cannot bridge two same servers!")
+            sys.exit()
 
         self.ip = ip[0] # Select First IP adress
         try:
@@ -55,10 +65,10 @@ class Client:
         self.socket_ip2.connect((self.ip2, self.port2))
         print(f"[BRIDGE] [GEN] [INF] Socket bound to IP1")
 
-        self.socket_ip1.send(f"[BRIDGE] Bridge from {self.ip2}:{self.port2} bounded to this server!".encode())
-        self.socket_ip2.send(f"[BRIDGE] Bridge from {self.ip}:{self.port} bounded to this server!".encode())
-        message_blacklist = [f"[BRIDGE] Bridge from {self.ip}:{self.port} bounded to this server!".encode(),
-                             f"[BRIDGE] Bridge from {self.ip2}:{self.port2} bounded to this server!".encode()]
+        self.socket_ip1.send(self.build_msg(f"Bridge from {self.ip2}:{self.port2} bounded to this server!"))
+        self.socket_ip2.send(self.build_msg(f"Bridge from {self.ip}:{self.port} bounded to this server!"))
+        message_blacklist = [self.build_msg(f"Bridge from {self.ip}:{self.port} bounded to this server!"),
+                             self.build_msg(f"Bridge from {self.ip2}:{self.port2} bounded to this server!")]
         
         print(f"[BRIDGE] [GEN] [INF] Start up all processes...")
         self.prc_pipe = {"1": None, "2": None, "blacklist": message_blacklist, "kill": False} # Target last messages, or it will create a bunch of spam
@@ -68,18 +78,13 @@ class Client:
         self.request_2 = Thread(target=self.bridge_to, args=(self.socket_ip2, self.socket_ip1, self.prc_pipe, "2"), daemon=True) # From Second To First
         self.request_2.start()
 
-        try:
-            while True:
-                input()
-        except:
-            self.prc_pipe["kill"] = True
-            sys.exit()
             
-        
+        while True:
+            pass
 
     def bridge_to(self, socket1, socket2, info, num): # First Socket (to listen from), Second Socket (to send messages), dict with last messages, num of server
         target_num = [x for x in info if x != num and x.isdigit()][0]
-        
+
         while True:
             if info["kill"]:
                 return
