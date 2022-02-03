@@ -1,4 +1,6 @@
-﻿# Bridge from one anonchat-server to another and vice versa written in Python
+﻿# Bridge from one anonchat-server to another 
+ and vice versa written in Python [V2]
+
 > Syntax:
 
 ```
